@@ -45,9 +45,11 @@ class base_command:
 
     def finalize(self):
         # Add the CRC8
+#        self.data[0x09] |= 0x40
         self.data.append(crc8.calculate(self.data[10:]))
         # Set the length of the command data
         # self.data[0x01] = len(self.data)
+        print(self.data[0x09])
         return self.data
 
 
@@ -131,6 +133,12 @@ class set_command(base_command):
     def turbo_mode(self, turbo_mode_enabled: bool):
         self.data[0x14] = 0x02 if turbo_mode_enabled else 0
 
+    def temp_unit_f(self):  # set temp to celccious
+        self.data[0x09] |= 0x0f
+
+    def temp_unit_c(self):  # This needs a better name, dunno what it actually means
+        self.data[0x09] &= (~0x04)
+        
 
 class appliance_response:
 
@@ -138,6 +146,7 @@ class appliance_response:
         # The response data from the appliance includes a packet header which we don't want 
         self.data = data[0xa:]
         _LOGGER.debug("Appliance response data: {}".format(self.data.hex()))
+        print(f'appliance response: {format(self.data.hex())}')
 
     # Byte 0x01
 

@@ -187,6 +187,8 @@ class air_conditioning_device(device):
             cmd.swing_mode = self._swing_mode.value
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
+            cmd.temp_unit_f()
+            print(cmd.data[0x09])
 
             pkt_builder = packet_builder(self.id)
             pkt_builder.set_command(cmd)
