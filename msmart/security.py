@@ -26,7 +26,7 @@ class security:
         decrypted = cipher.decrypt(bytes(raw))
 
         # Remove the padding
-        decrypted = self._unpad(decrypted)   
+        #decrypted = self._unpad(decrypted)   
 
         return decrypted
 
@@ -44,6 +44,7 @@ class security:
         s.extend([pad] * pad)
        
     def _unpad(self, s):
+        print(f"unpad end-:{s[-1]}")
         return s[:-s[-1]]
 
     def enc_key(self):

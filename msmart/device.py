@@ -11,6 +11,7 @@ from msmart.packet_builder import packet_builder
 
 VERSION = '0.1.15'
 
+logging.basicConfig(level=logging.NOTSET)
 _LOGGER = logging.getLogger(__name__)
 
 def convert_device_id_hex(device_id: int):
@@ -174,6 +175,7 @@ class air_conditioning_device(device):
             response = appliance_response(data)
             self._defer_update = False
             self.update(response)
+            print(f"updated device to:{self}")
 
     def apply(self):
         self._updating = True
@@ -187,8 +189,8 @@ class air_conditioning_device(device):
             cmd.swing_mode = self._swing_mode.value
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
-            cmd.temp_unit_f()
-            print(cmd.data[0x09])
+#            cmd.temp_unit_f()
+            print(f"0x09 byte was {cmd.data[0x09]}")
 
             pkt_builder = packet_builder(self.id)
             pkt_builder.set_command(cmd)
@@ -200,6 +202,7 @@ class air_conditioning_device(device):
                 response = appliance_response(data)
                 if not self._defer_update:
                     self.update(response)
+                    print(f"updated device to:{self}")
         finally:
             self._updating = False
             self._defer_update = False

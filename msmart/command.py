@@ -49,7 +49,7 @@ class base_command:
         self.data.append(crc8.calculate(self.data[10:]))
         # Set the length of the command data
         # self.data[0x01] = len(self.data)
-        print(self.data[0x09])
+        #print(self.data[0x09])
         return self.data
 
 
@@ -146,12 +146,13 @@ class appliance_response:
         # The response data from the appliance includes a packet header which we don't want 
         self.data = data[0xa:]
         _LOGGER.debug("Appliance response data: {}".format(self.data.hex()))
-        print(f'appliance response: {format(self.data.hex())}')
+        print(f"appliance response: {format(self.data.hex())}")
 
     # Byte 0x01
 
     @property
     def power_state(self):
+        print(f"appliance response: {format(self.data.hex())}")
         return (self.data[0x01] & 0x1) > 0
 
     @property
@@ -169,6 +170,7 @@ class appliance_response:
     # Byte 0x02
     @property
     def target_temperature(self):
+        print(f"appliance response: {format(self.data.hex())}")
         return (self.data[0x02] & 0xf) + 16
 
     @property

@@ -39,12 +39,13 @@ class lan:
 
             # Received data
             response = sock.recv(512)
+            _LOGGER.debug("Received from %s:%s %s." %(self.device_ip, self.device_port, response.hex()))
+#            print(f"size of response{response.size}")
         except socket.timeout:
             _LOGGER.info("Connect the Device %s:%s TimeOut for 10s. don't care about a small amount of this. if many maybe not support." %(self.device_ip, self.device_port))
             return bytearray()
         finally:
             sock.close()
-        _LOGGER.debug("Received from %s:%s %s." %(self.device_ip, self.device_port, message.hex()))
         return response
 
     def encode(self, data: bytearray):
@@ -68,6 +69,7 @@ class lan:
         encoded = self.encode(data)
         response = bytearray(self.request(data))
         if len(response) > 0:
+            print(f"resp was {response[40:88]}")
             reply = self.decode(self.security.aes_decrypt(response[40:88]))
             return reply
         else:
