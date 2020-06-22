@@ -132,7 +132,10 @@ class set_command(base_command):
 
     @turbo_mode.setter
     def turbo_mode(self, turbo_mode_enabled: bool):
-        self.data[0x14] = 0x02 if turbo_mode_enabled else 0
+        if (turbo_mode_enabled):
+            self.data[0x14] |= 0x02
+        else:
+            self.data[0x14] &= (~0x02)
 
     @property
     def night_light(self):
@@ -158,7 +161,7 @@ class set_command(base_command):
 
     @property
     def fahrenheit(self): # is the temperature unit fahrenheit? (celcius otherwise)
-        return self.data[0x0c] & 0x10 > 0
+        return self.data[0x14] & 0x04 > 0
 
     @dot5.setter
     def fahrenheit(self, on: bool): # set the unit to fahrenheit from celcius

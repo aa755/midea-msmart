@@ -12,8 +12,8 @@ from msmart.security import security
 
 VERSION = '0.1.17'
 
+logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
-
 
 class lan:
     def __init__(self, device_ip, device_id):
@@ -35,19 +35,19 @@ class lan:
 
         try:
             # Send data
-            _LOGGER.debug("Sending to %s:%s %s." %
+            _LOGGER.info("Sending to %s:%s %s." %
                           (self.device_ip, self.device_port, message.hex()))
             sock.sendall(message)
 
             # Received data
             response = sock.recv(512)
         except socket.timeout:
-            _LOGGER.info("Connect the Device %s:%s TimeOut for 10s. don't care about a small amount of this. if many maybe not support." % (
+            _LOGGER.info("Connect the Device %s:%s TimeOut for 10s. do care about a small amount of this. if many maybe not support." % (
                 self.device_ip, self.device_port))
             return bytearray(0)
         finally:
             sock.close()
-        _LOGGER.debug("Received from %s:%s %s." %
+        _LOGGER.info("Received from %s:%s %s." %
                       (self.device_ip, self.device_port, message.hex()))
         if response.hex() == message.hex():
             _LOGGER.debug("Something wrong! reply is same. %s:%s %s." % (

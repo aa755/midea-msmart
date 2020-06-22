@@ -199,8 +199,8 @@ class air_conditioning_device(device):
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
             pkt_builder = packet_builder(self.id)
-#            cmd.night_light = False
             cmd.fahrenheit = self.farenheit_unit
+            cmd.night_light = True
             pkt_builder.set_command(cmd)
 
             data = pkt_builder.finalize()
@@ -336,6 +336,7 @@ class unknown_device(device):
 
     def refresh(self):
         cmd = request_status_command(self.type)
+        cmd.night_light=True
         pkt_builder = packet_builder()
         pkt_builder.set_command(cmd)
 
