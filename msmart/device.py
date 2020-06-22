@@ -9,7 +9,7 @@ from msmart.command import base_command as request_status_command
 from msmart.command import set_command
 from msmart.packet_builder import packet_builder
 
-VERSION = '0.1.17'
+VERSION = '0.1.19'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -192,7 +192,13 @@ class air_conditioning_device(device):
             response = appliance_response(data)
             self._defer_update = False
             self._support = True
-            self.update(response)
+            if data[0xa] != 0xc0:
+                _LOGGER.debug(
+                    "refresh - Not status(0xc0) respone, defer update. {}, {}: {}".format(self.ip, self.id, data[0xa:].hex()))
+                self._defer_update = True
+            if not self._defer_update:
+                self.update(response)
+                self._defer_update = False
 
     def apply(self):
         self._updating = True
@@ -207,8 +213,8 @@ class air_conditioning_device(device):
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
             pkt_builder = packet_builder(self.id)
+#            cmd.night_light = False
             cmd.fahrenheit = self.farenheit_unit
-            cmd.night_light = True
             pkt_builder.set_command(cmd)
 
             data = pkt_builder.finalize()
@@ -218,6 +224,10 @@ class air_conditioning_device(device):
             if len(data) > 0:
                 response = appliance_response(data)
                 self._support = True
+                if data[0xa] != 0xc0:
+                    _LOGGER.debug(
+                        "apply - Not status(0xc0) respone, defer update. {}, {}: {}".format(self.ip, self.id, data[0xa:].hex()))
+                    self._defer_update = True
                 if not self._defer_update:
                     self.update(response)
         finally:

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import logging
 import requests
 import datetime
@@ -10,7 +11,7 @@ from msmart.security import security
 # The Midea cloud client is by far the more obscure part of this library, and without some serious reverse engineering
 # this would not have been possible. Thanks Yitsushi for the ruby implementation. This is an adaptation to Python 3
 
-VERSION = '0.1.17'
+VERSION = '0.1.19'
 
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
@@ -29,30 +30,30 @@ class lan:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(8)
 
-        # Connect the Device
-        device_address = (self.device_ip, self.device_port)
-        sock.connect(device_address)
-
         try:
+            # Connect the Device
+            device_address = (self.device_ip, self.device_port)
+            sock.connect(device_address)
+
             # Send data
-            _LOGGER.info("Sending to %s:%s %s." %
-                          (self.device_ip, self.device_port, message.hex()))
+            _LOGGER.debug("Sending to {}:{} {}".format(
+                self.device_ip, self.device_port, message.hex()))
             sock.sendall(message)
 
             # Received data
             response = sock.recv(512)
+        except socket.error:
+            _LOGGER.info("Couldn't connect with Device {}:{}".format(
+                self.device_ip, self.device_port))
+            return bytearray(0)
         except socket.timeout:
-            _LOGGER.info("Connect the Device %s:%s TimeOut for 10s. do care about a small amount of this. if many maybe not support." % (
+            _LOGGER.info("Connect the Device %s:%s TimeOut for 8s. don't care about a small amount of this. if many maybe not support".format(
                 self.device_ip, self.device_port))
             return bytearray(0)
         finally:
             sock.close()
-        _LOGGER.info("Received from %s:%s %s." %
-                      (self.device_ip, self.device_port, message.hex()))
-        if response.hex() == message.hex():
-            _LOGGER.debug("Something wrong! reply is same. %s:%s %s." % (
-                self.device_ip, self.device_port, message.hex()))
-            return bytearray(0)
+        _LOGGER.debug("Received from {}:{} {}".format(
+            self.device_ip, self.device_port, message.hex()))
         return response
 
     def encode(self, data: bytearray):
