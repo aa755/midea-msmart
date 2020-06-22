@@ -16,9 +16,9 @@ _LOGGER = logging.getLogger(__name__)
 
 def overdone(mode, target, actual):
     if (mode==air_conditioning_device.operational_mode_enum.cool):
-        return (actual<target-1)
+        return (actual<=target-0.5)
     elif (mode==air_conditioning_device.operational_mode_enum.heat):
-        return (actual>target+1)
+        return (actual>=target+0.5)
 
 def convert_device_id_hex(device_id: int):
     hex_string = hex(device_id)[2:]
