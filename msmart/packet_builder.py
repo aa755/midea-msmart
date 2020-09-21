@@ -43,8 +43,9 @@ class packet_builder:
 
     def finalize(self):
         # Add cheksum
-#        _LOGGER.debug(f"Finalize request data: {self.command.length}")
+        _LOGGER.debug(f"Finalize request data: {len(self.command)}")
         self.command.append(self.checksum(self.command[1:]))
+#        _LOGGER.debug(f"Finalize request data after checksum: {len(self.command)}")
         _LOGGER.debug("Finalize request data: {}".format(self.command.hex()))
         # # Append the command data(48 bytes) to the packet
         # self.packet.extend(self.security.aes_encrypt(self.command)[:48])
@@ -60,7 +61,8 @@ class packet_builder:
         return self.security.encode32_data(data)
 
     def checksum(self, data):
-        return 255 - sum(data) % 256 + 1
+        c = (~ sum(data) + 1) & 0xff
+        return (~ sum(data) + 1) & 0xff
 
     def packet_time(self):
         t = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')[

@@ -31,4 +31,6 @@ class lan:
         ser = serial.Serial(self.device_ip, timeout=None, baudrate=9600)
         print('connected')
         ser.write(data)
-        return ser.read(31)
+        resp=ser.read(31)
+        ser.close()
+        return resp
