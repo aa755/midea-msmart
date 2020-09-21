@@ -43,7 +43,7 @@ class packet_builder:
 
     def finalize(self):
         # Add cheksum
-        _LOGGER.debug(f"Finalize request data: {self.command.length()}")
+#        _LOGGER.debug(f"Finalize request data: {self.command.length}")
         self.command.append(self.checksum(self.command[1:]))
         _LOGGER.debug("Finalize request data: {}".format(self.command.hex()))
         # # Append the command data(48 bytes) to the packet
