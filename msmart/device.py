@@ -9,7 +9,7 @@ from msmart.command import base_command as request_status_command
 from msmart.command import set_command
 from msmart.packet_builder import packet_builder
 
-VERSION = '0.1.17'
+VERSION = '0.1.23'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,11 +31,12 @@ def convert_device_id_int(device_id: str):
 
 class device:
 
-    def __init__(self, device_ip: str, device_id: int):
+    def __init__(self, device_ip: str, device_id: int, device_port: int):
         device_id = convert_device_id_hex(device_id)
-        self._lan_service = lan(device_ip, device_id)
+        self._lan_service = lan(device_ip, device_id, device_port)
         self._ip = device_ip
         self._id = device_id
+        self._port = device_port
         self._type = 0xac
         self._updating = False
         self._defer_update = False
@@ -44,7 +45,7 @@ class device:
 
     def setup(self):
         # self.air_conditioning_device.refresh()
-        device = air_conditioning_device(self._ip, self._id)
+        device = air_conditioning_device(self._ip, self._id, self._port)
         return device
 
     def set_device_detail(self, device_detail: dict):
@@ -154,8 +155,8 @@ class air_conditioning_device(device):
             _LOGGER.debug("Unknown Swing Mode: {}".format(value))
             return air_conditioning_device.swing_mode_enum.Off
 
-    def __init__(self, device_ip: str, device_id: str):
-        super().__init__(device_ip, convert_device_id_int(device_id))
+    def __init__(self, device_ip: str, device_id: str, device_port: int):
+        super().__init__(device_ip, convert_device_id_int(device_id), device_port)
         self._prompt_tone = False
         self._power_state = False
         self._target_temperature = 17.0
@@ -184,7 +185,16 @@ class air_conditioning_device(device):
             response = appliance_response(data)
             self._defer_update = False
             self._support = True
-            self.update(response)
+            if not self._defer_update:
+                if data[0xa] == 0xc0:
+                    self.update(response)
+                if data[0xa] == 0xa1 or data[0xa] == 0xa0:
+                    '''only update indoor_temperature and outdoor_temperature'''
+                    _LOGGER.debug("refresh - Special Respone. {}, {}: {}".format(
+                        self.ip, self.id, data[0xa:].hex()))
+                    pass
+                    # self.update_special(response)
+                self._defer_update = False
 
     def apply(self):
         self._updating = True
@@ -199,8 +209,8 @@ class air_conditioning_device(device):
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
             pkt_builder = packet_builder(self.id)
+#            cmd.night_light = False
             cmd.fahrenheit = self.farenheit_unit
-            cmd.night_light = True
             pkt_builder.set_command(cmd)
 
             data = pkt_builder.finalize()
@@ -211,7 +221,14 @@ class air_conditioning_device(device):
                 response = appliance_response(data)
                 self._support = True
                 if not self._defer_update:
-                    self.update(response)
+                    if data[0xa] == 0xc0:
+                        self.update(response)
+                    if data[0xa] == 0xa1 or data[0xa] == 0xa0:
+                        '''only update indoor_temperature and outdoor_temperature'''
+                        _LOGGER.debug("apply - Special Respone. {}, {}: {}".format(
+                            self.ip, self.id, data[0xa:].hex()))
+                        pass
+                        # self.update_special(response)
         finally:
             self._updating = False
             self._defer_update = False
@@ -227,10 +244,22 @@ class air_conditioning_device(device):
             res.swing_mode)
         self._eco_mode = res.eco_mode
         self._turbo_mode = res.turbo_mode
-        self._indoor_temperature = res.indoor_temperature
-        self._outdoor_temperature = res.outdoor_temperature
+        indoor_temperature = res.indoor_temperature 
+        if indoor_temperature != 0xff:
+            self._indoor_temperature = indoor_temperature
+        outdoor_temperature = res.outdoor_temperature
+        if outdoor_temperature != 0xff:
+            self._outdoor_temperature = outdoor_temperature
         self._timer_on = res.on_timer
         self._timer_off = res.off_timer
+    
+    def update_special(self, res: appliance_response):
+        indoor_temperature = res.indoor_temperature
+        if indoor_temperature != 0xff:
+            self._indoor_temperature = indoor_temperature
+        outdoor_temperature = res.outdoor_temperature
+        if outdoor_temperature != 0xff:
+            self._outdoor_temperature = outdoor_temperature
 
     @property
     def prompt_tone(self):
@@ -336,7 +365,6 @@ class unknown_device(device):
 
     def refresh(self):
         cmd = request_status_command(self.type)
-        cmd.night_light=True
         pkt_builder = packet_builder()
         pkt_builder.set_command(cmd)
 
