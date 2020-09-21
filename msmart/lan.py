@@ -1,11 +1,8 @@
 import logging
-import requests
 import datetime
-import json
-import socket
 import sys
-
-from msmart.security import security
+import serial
+import time
 
 # The Midea cloud client is by far the more obscure part of this library, and without some serious reverse engineering
 # this would not have been possible. Thanks Yitsushi for the ruby implementation. This is an adaptation to Python 3
@@ -15,70 +12,23 @@ VERSION = '0.1.17'
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)
 
+#size 62 chars. 2 hex digits=1 byte. so 31 bytes
+#aa1eac00000000000002c001ae667f7f000000000071850000000000003734
+
+#device response on refresh
+#aa1eac00000000000003c000ae667f7f00000000006b6b0000000000005833
+#aa1eac00000000000003c000ae667f7f00000000006b6b0000000000005833
+
+#refresh response
+#aa23ac0000000000000240818e6603ff000000000000000000000000000018000000ce92
+
 class lan:
     def __init__(self, device_ip, device_id):
         # Get this from any of the Midea based apps, you can find one on Yitsushi's github page
         self.device_ip = device_ip
-        self.device_id = device_id
-        self.device_port = 6444
-        self.security = security()
-        self._retries = 0
-
-    def request(self, message):
-        # Create a TCP/IP socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(8)
-
-        # Connect the Device
-        device_address = (self.device_ip, self.device_port)
-        sock.connect(device_address)
-
-        try:
-            # Send data
-            _LOGGER.info("Sending to %s:%s %s." %
-                          (self.device_ip, self.device_port, message.hex()))
-            sock.sendall(message)
-
-            # Received data
-            response = sock.recv(512)
-        except socket.timeout:
-            _LOGGER.info("Connect the Device %s:%s TimeOut for 10s. do care about a small amount of this. if many maybe not support." % (
-                self.device_ip, self.device_port))
-            return bytearray(0)
-        finally:
-            sock.close()
-        _LOGGER.info("Received from %s:%s %s." %
-                      (self.device_ip, self.device_port, message.hex()))
-        if response.hex() == message.hex():
-            _LOGGER.debug("Something wrong! reply is same. %s:%s %s." % (
-                self.device_ip, self.device_port, message.hex()))
-            return bytearray(0)
-        return response
-
-    def encode(self, data: bytearray):
-        normalized = []
-        for b in data:
-            if b >= 128:
-                b = b - 256
-            normalized.append(str(b))
-
-        string = ','.join(normalized)
-        return bytearray(string.encode('ascii'))
-
-    def decode(self, data: bytearray):
-        data = [int(a) for a in data]
-        for i in range(len(data)):
-            if data[i] < 0:
-                data[i] = data[i] + 256
-        return bytearray(data)
 
     def appliance_transparent_send(self, data):
-        response = bytearray(self.request(data))
-        if len(response) > 0:
-            if len(response) == 88:
-                reply = self.decode(self.security.aes_decrypt(response[40:72]))
-            else:
-                reply = self.decode(self.security.aes_decrypt(response[40:88]))
-            return reply
-        else:
-            return bytearray(0)
+        ser = serial.Serial(self.device_ip, timeout=None, baudrate=9600)
+        print('connected')
+        ser.write(data)
+        return ser.read(31)
