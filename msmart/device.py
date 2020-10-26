@@ -253,13 +253,16 @@ class air_conditioning_device(device):
         self._timer_off = res.off_timer
         if (self._power_state):
             newtemp_control_override=False
-            if (self.tempcontrol_overriden_fan):
-                if (overdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
-                    newtemp_control_override=True
+            if self.tempcontrol_overriden_fan:
+                if self._operational_mode==air_conditioning_device.operational_mode_enum.fan_only:
+                    if (overdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
+                        newtemp_control_override=True
+                    else:
+                        self._operational_mode=self.tempcontrol_usermode# restore old mode
                 else:
-                    self._operational_mode=self.tempcontrol_usermode# restore old mode
+                    newtemp_control_override=False
             else:
-                if (overdone(self.operational_mode, self._target_temperature, self._indoor_temperature)):
+                if overdone(self.operational_mode, self._target_temperature, self._indoor_temperature):
                     newtemp_control_override=True
                     self.tempcontrol_usermode=self._operational_mode
             self.tempcontrol_overriden_fan=newtemp_control_override
