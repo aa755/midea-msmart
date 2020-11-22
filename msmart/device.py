@@ -199,6 +199,7 @@ class air_conditioning_device(device):
             if not self._defer_update:
                 self.update(response)
                 self._defer_update = False
+        return data
 
     def apply(self):
         self._updating = True
