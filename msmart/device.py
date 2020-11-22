@@ -9,10 +9,16 @@ from msmart.command import base_command as request_status_command
 from msmart.command import set_command
 from msmart.packet_builder import packet_builder
 
-VERSION = '0.1.17'
+VERSION = '0.1.19'
 
 _LOGGER = logging.getLogger(__name__)
 
+
+def overdone(mode, target, actual):
+    if (mode==air_conditioning_device.operational_mode_enum.cool):
+        return (actual<=target-0.5)
+    elif (mode==air_conditioning_device.operational_mode_enum.heat):
+        return (actual>=target+0.5)
 
 def convert_device_id_hex(device_id: int):
     hex_string = hex(device_id)[2:]
@@ -165,6 +171,8 @@ class air_conditioning_device(device):
         self._eco_mode = False
         self._turbo_mode = False
         self.farenheit_unit = False # default unit is Celcius. this is just to control the temperatue unit of the AC's display. the target_temperature setter always expects a celcius temperature (resolution of 0.5C), as does the midea API
+        self.tempcontrol_overriden_fan=False#restarting off hass will be a problem. AC wont change its state. need to manually change mode to heat/cool opposite temporarily after restart
+        self.tempcontrol_usermode=air_conditioning_device.operational_mode_enum.auto
 
         self._on_timer = None
         self._off_timer = None
@@ -184,7 +192,13 @@ class air_conditioning_device(device):
             response = appliance_response(data)
             self._defer_update = False
             self._support = True
-            self.update(response)
+            if data[0xa] != 0xc0:
+                _LOGGER.debug(
+                    "refresh - Not status(0xc0) respone, defer update. {}, {}: {}".format(self.ip, self.id, data[0xa:].hex()))
+                self._defer_update = True
+            if not self._defer_update:
+                self.update(response)
+                self._defer_update = False
 
     def apply(self):
         self._updating = True
@@ -193,14 +207,14 @@ class air_conditioning_device(device):
             cmd.prompt_tone = self._prompt_tone
             cmd.power_state = self._power_state
             cmd.target_temperature = self._target_temperature
-            cmd.operational_mode = self._operational_mode.value
+            cmd.operational_mode = air_conditioning_device.operational_mode_enum.fan_only.value if self.tempcontrol_overriden_fan else self._operational_mode.value
             cmd.fan_speed = self._fan_speed.value
             cmd.swing_mode = self._swing_mode.value
             cmd.eco_mode = self._eco_mode
             cmd.turbo_mode = self._turbo_mode
             pkt_builder = packet_builder(self.id)
+#            cmd.night_light = False
             cmd.fahrenheit = self.farenheit_unit
-            cmd.night_light = True
             pkt_builder.set_command(cmd)
 
             data = pkt_builder.finalize()
@@ -210,6 +224,10 @@ class air_conditioning_device(device):
             if len(data) > 0:
                 response = appliance_response(data)
                 self._support = True
+                if data[0xa] != 0xc0:
+                    _LOGGER.debug(
+                        "apply - Not status(0xc0) respone, defer update. {}, {}: {}".format(self.ip, self.id, data[0xa:].hex()))
+                    self._defer_update = True
                 if not self._defer_update:
                     self.update(response)
         finally:
@@ -219,8 +237,10 @@ class air_conditioning_device(device):
     def update(self, res: appliance_response):
         self._power_state = res.power_state
         self._target_temperature = res.target_temperature
-        self._operational_mode = air_conditioning_device.operational_mode_enum.get(
-            res.operational_mode)
+        ac_mode = air_conditioning_device.operational_mode_enum.get(res.operational_mode)
+        if (ac_mode != air_conditioning_device.operational_mode_enum.fan_only or self._power_state==False):
+            self.tempcontrol_overriden_fan=False # if the automation made it fan_only, the user manually changed mode via remote or hass or app
+        self._operational_mode = self.tempcontrol_usermode if self.tempcontrol_overriden_fan else ac_mode
         self._fan_speed = air_conditioning_device.fan_speed_enum.get(
             res.fan_speed)
         self._swing_mode = air_conditioning_device.swing_mode_enum.get(
@@ -231,6 +251,23 @@ class air_conditioning_device(device):
         self._outdoor_temperature = res.outdoor_temperature
         self._timer_on = res.on_timer
         self._timer_off = res.off_timer
+        if (self._power_state):
+            newtemp_control_override=False
+            if (self.tempcontrol_overriden_fan):
+                if (overdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
+                    newtemp_control_override=True
+                else:
+                    self._operational_mode=self.tempcontrol_usermode# restore old mode
+            else:
+                if (overdone(self.operational_mode, self._target_temperature, self._indoor_temperature)):
+                    newtemp_control_override=True
+                    self.tempcontrol_usermode=self._operational_mode
+            self.tempcontrol_overriden_fan=newtemp_control_override
+            newmode=air_conditioning_device.operational_mode_enum.fan_only if self.tempcontrol_overriden_fan else self._operational_mode
+            print(f'oldmode:{ac_mode}, newmode:{newmode}')
+            if (newmode!=ac_mode):
+                self._defer_update = True
+                self.apply()
 
     @property
     def prompt_tone(self):

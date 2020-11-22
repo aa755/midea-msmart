@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import logging
 import datetime
 import sys
@@ -7,7 +8,7 @@ import time
 # The Midea cloud client is by far the more obscure part of this library, and without some serious reverse engineering
 # this would not have been possible. Thanks Yitsushi for the ruby implementation. This is an adaptation to Python 3
 
-VERSION = '0.1.17'
+VERSION = '0.1.19'
 
 logging.basicConfig(level=logging.DEBUG)
 _LOGGER = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ from msmart.command import base_command
 from msmart.security import security
 import datetime
 
-VERSION = '0.1.17'
+VERSION = '0.1.19'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +34,6 @@ class packet_builder:
             # 14 bytes
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
         ])
-        _LOGGER.debug("add packet_time")
         self.packet[12:20] = self.packet_time()
         self.packet[20:26] = bytearray.fromhex(device_id)
 
