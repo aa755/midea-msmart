@@ -8,7 +8,7 @@ from msmart.command import appliance_response
 from msmart.command import base_command as request_status_command
 from msmart.command import set_command
 from msmart.packet_builder import packet_builder
-
+import traceback
 VERSION = '0.1.19'
 
 _LOGGER = logging.getLogger(__name__)
@@ -202,7 +202,7 @@ class air_conditioning_device(device):
             cmd.prompt_tone = self._prompt_tone
             cmd.power_state = self._power_state
             cmd.target_temperature = self._target_temperature
-            cmd.operational_mode = air_conditioning_device.operational_mode_enum.fan_only.value if self.tempcontrol_overriden_fan else self._operational_mode.value
+            cmd.operational_mode = self._operational_mode.value
             cmd.fan_speed = self._fan_speed.value
             cmd.swing_mode = self._swing_mode.value
             cmd.eco_mode = self._eco_mode
@@ -225,6 +225,7 @@ class air_conditioning_device(device):
                 else:
                     self.update(response)
         except:
+            print(traceback.format_exc())
             print('error occurred')
 
     def updateha(self, data):

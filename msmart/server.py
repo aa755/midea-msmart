@@ -8,8 +8,7 @@ import socket
 
 client = midea_device('/dev/ttyUSB0', 12345)
 device = client.setup()
-device.farenheit_unit=True
-lastresp = bytearray()
+#device.farenheit_unit=True
 subscribers=[]
 HOST='0.0.0.0'
 PORT=6655
@@ -37,23 +36,25 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 device.target_temperature=16.0+ ((data[1])/2.0)
                 device.apply()
             elif (data[0] == 3):
-                device.operational_mode=data[1]
+                device.operational_mode = ac.operational_mode_enum.get(data[1])
                 device.apply()
             elif (data[0] == 4):
                 device.turbo_mode = (data[1] == 1)
                 device.apply()
             elif (data[0] == 5):
-                device.fan_speed = data[1]
+                device.fan_speed = ac.fan_speed_enum.get(data[1])
                 device.apply()
             elif (data[0] == 6):
-                device.swing_mode = data[1]
+                device.swing_mode = ac.swing_mode_enum.get(data[1])
                 device.apply()
             else:
                 print(f'invalid command {addr}')
 
-        except:
+        except socket.timeout:
             lastresp=device.refresh()
             print(len(lastresp))#31
+            lastrespa=bytearray(lastresp)
+            lastrespa.extend([199])
             for addr in subscribers:
-                sends.sendto(lastresp, addr)
+                sends.sendto(lastrespa, addr)
             time.sleep(8)
