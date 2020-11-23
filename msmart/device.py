@@ -227,9 +227,7 @@ class air_conditioning_device(device):
         except:
             print('error occurred')
 
-
-
-    def update(self, res: appliance_response):
+    def update(self, res: appliance_response, finectrl=True):
         self._power_state = res.power_state
         self._target_temperature = res.target_temperature
         oldmode = air_conditioning_device.operational_mode_enum.get(res.operational_mode)
@@ -243,6 +241,8 @@ class air_conditioning_device(device):
         self._outdoor_temperature = res.outdoor_temperature
         self._timer_on = res.on_timer
         self._timer_off = res.off_timer
+        if not finectrl:
+            return
         if (oldmode != air_conditioning_device.operational_mode_enum.fan_only or self._power_state==False):
             self.tempcontrol_overriden_fan=False # if the automation made it fan_only, the user manually changed         if (self._power_state):
             if self._power_state==False:
