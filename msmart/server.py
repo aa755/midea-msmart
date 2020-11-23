@@ -40,6 +40,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
             elif (data[0] == 4):
                 device.turbo_mode = (data[1] == 1)
                 device.apply()
+            elif (data[0] == 5):
+                device.fan_speed = data[1]
+                device.apply()
+            elif (data[0] == 6):
+                device.swing_mode = data[1]
+                device.apply()
             else:
                 print(f'invalid command {addr}')
 
