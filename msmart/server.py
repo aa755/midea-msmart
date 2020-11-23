@@ -20,14 +20,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
     while True:
         try:
             data, addr = recv.recvfrom(2)
-            host, port = addr # port is useless, it is something chosen by the socket lib. the other is probably not listening on it
             print(f'received {data} of size {len(data)}')
-            if (data[0] == 0):
-                if (host in subscribers):
-                    print(f'{host} was already subscribed')
+            if data[0]==0:
+                addr = (addr[0],2000+data[1])
+                if (addr in subscribers):
+                    print(f'{addr} was alreadyy subscribed')
                 else:
-                    subscribers.extend([host])
-                    print(f'subscribing {host}.')
+                    subscribers.extend([addr])
+                    print(f'subscribing {addr}.')
             elif (data[0] == 1):
                 device.power_state = (data[1] == 1)
                 device.apply()
@@ -41,11 +41,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 device.turbo_mode = (data[1] == 1)
                 device.apply()
             else:
-                print(f'invalid command {data}')
+                print(f'invalid command {addr}')
 
         except:
             lastresp=device.refresh()
             print(len(lastresp))#31
-            for host in subscribers:
-                sends.sendto(lastresp, (host, PORT))
+            for addr in subscribers:
+                sends.sendto(lastresp, addr)
             time.sleep(8)
