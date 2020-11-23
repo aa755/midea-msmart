@@ -247,18 +247,20 @@ class air_conditioning_device(device):
             self.tempcontrol_overriden_fan=False # if the automation made it fan_only, the user manually changed         if (self._power_state):
             if self._power_state==False:
                 return
-        newtemp_control_override=False
-        if self.tempcontrol_overriden_fan and self._operational_mode==air_conditioning_device.operational_mode_enum.fan_only:
+        newmode=oldmode
+        if self.tempcontrol_overriden_fan and oldmode==air_conditioning_device.operational_mode_enum.fan_only:
             if (overdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
-                newtemp_control_override=True
+                self.tempcontrol_overriden_fan=True
+                newmode=air_conditioning_device.operational_mode_enum.fan_only
             else:
-                self._operational_mode=self.tempcontrol_usermode# restore old mode
+                self.tempcontrol_overriden_fan=False
+                newmode=self.tempcontrol_usermode# restore old mode
         elif overdone(self.operational_mode, self._target_temperature, self._indoor_temperature):
-            newtemp_control_override=True
+            self.tempcontrol_overriden_fan=True
             self.tempcontrol_usermode=self._operational_mode
-        self.tempcontrol_overriden_fan=newtemp_control_override
-        self._operational_mode = air_conditioning_device.operational_mode_enum.fan_only if self.tempcontrol_overriden_fan else oldmode
-        print(f'oldmode:{oldmode}, newmode:{self._operational_mode}, user_modee:{self.tempcontrol_usermode}, target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_only_overridden: {self.tempcontrol_overriden_fan}')
+            newmode=air_conditioning_device.operational_mode_enum.fan_only
+        self._operational_mode = newmode
+        print(f'oldmode:{oldmode}, newmode:{self._operational_mode}, user_modeee:{self.tempcontrol_usermode}, target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_only_overridden: {self.tempcontrol_overriden_fan}')
         if (self._operational_mode!=oldmode):
             self.apply()
 
