@@ -8,6 +8,7 @@ import socket
 
 client = midea_device('/dev/ttyUSB0', 12345)
 device = client.setup()
+device.farenheit_unit=True
 lastresp = bytearray()
 subscribers=[]
 HOST='0.0.0.0'
@@ -28,6 +29,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 else:
                     subscribers.extend([addr])
                     print(f'subscribing {addr}.')
+                print(f'current subscribers are {subscribers}')
             elif (data[0] == 1):
                 device.power_state = (data[1] == 1)
                 device.apply()
