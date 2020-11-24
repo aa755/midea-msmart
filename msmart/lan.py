@@ -30,7 +30,7 @@ class lan:
 
     def appliance_transparent_send(self, data):
         ser = serial.Serial(self.device_ip, timeout=None, baudrate=9600)
-        print('connected')
+#        print('connected')
         ser.write(data)
         resp=ser.read(31)
         ser.close()

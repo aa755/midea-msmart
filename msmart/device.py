@@ -176,6 +176,7 @@ class air_conditioning_device(device):
         self._off_timer = None
         self._indoor_temperature = 0.0
         self._outdoor_temperature = 0.0
+        self._finectrl = True
 
     def refresh(self):
         cmd = request_status_command(self.type)
@@ -246,8 +247,9 @@ class air_conditioning_device(device):
         self._outdoor_temperature = res.outdoor_temperature
         self._timer_on = res.on_timer
         self._timer_off = res.off_timer
-        if not finectrl:
+        if (not finectrl) or (not self._finectrl):
             self._operational_mode=oldmode
+            print(f'oldnewmode:{oldmode}, usermode:{self.tempcontrol_usermode}, \n target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_overridden: {self.tempcontrol_overriden_fan}')
             return
         if (oldmode != air_conditioning_device.operational_mode_enum.fan_only or self._power_state==False):
             self.tempcontrol_overriden_fan=False # if the automation made it fan_only, the user manually changed         if (self._power_state):
@@ -266,7 +268,7 @@ class air_conditioning_device(device):
             self.tempcontrol_usermode=self._operational_mode
             newmode=air_conditioning_device.operational_mode_enum.fan_only
         self._operational_mode = newmode
-        print(f'oldmode:{oldmode}, newmode:{self._operational_mode}, user_modeee:{self.tempcontrol_usermode}, target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_only_overridden: {self.tempcontrol_overriden_fan}')
+        print(f'oldmode:{oldmode}, newmode:{self._operational_mode}, usermode:{self.tempcontrol_usermode}, \n target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_overridden: {self.tempcontrol_overriden_fan}')
         if (self._operational_mode!=oldmode):
             self.apply()
 

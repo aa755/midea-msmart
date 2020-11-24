@@ -8,7 +8,7 @@ import socket
 
 client = midea_device('/dev/ttyUSB0', 12345)
 device = client.setup()
-#device.farenheit_unit=True
+device.farenheit_unit=True
 subscribers=[]
 HOST='0.0.0.0'
 PORT=6655
@@ -46,6 +46,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 device.apply()
             elif (data[0] == 6):
                 device.swing_mode = ac.swing_mode_enum.get(data[1])
+                device.apply()
+            elif (data[0] == 7):
+                device._finectrl = (data[1]==1)
                 device.apply()
             else:
                 print(f'invalid command {addr}')
