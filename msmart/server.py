@@ -37,6 +37,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 device.apply()
             elif (data[0] == 3):
                 device.operational_mode = ac.operational_mode_enum.get(data[1])
+                device.tempcontrol_usermode = False
+                device.power_state = True
                 device.apply()
             elif (data[0] == 4):
                 device.turbo_mode = (data[1] == 1)
@@ -49,6 +51,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as recv, socket.socket(soc
                 device.apply()
             elif (data[0] == 7):
                 device._finectrl = (data[1]==1)
+                device.apply()
+            elif (data[0] == 8):
+                device._tswing = (float(data[1]))/2.0
+                print(f'seting temp swing to {device._tswing}')
                 device.apply()
             else:
                 print(f'invalid command {addr}')

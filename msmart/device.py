@@ -14,12 +14,6 @@ VERSION = '0.1.19'
 _LOGGER = logging.getLogger(__name__)
 
 
-def overdone(mode, target, actual):
-    if (mode==air_conditioning_device.operational_mode_enum.cool):
-        return (actual<=target-0.5)
-    elif (mode==air_conditioning_device.operational_mode_enum.heat):
-        return (actual>=target+0.5)
-
 def convert_device_id_hex(device_id: int):
     hex_string = hex(device_id)[2:]
     if len(hex_string) % 2 != 0:
@@ -177,6 +171,19 @@ class air_conditioning_device(device):
         self._indoor_temperature = 0.0
         self._outdoor_temperature = 0.0
         self._finectrl = True
+        self._tswing = 1.0
+
+    def overdone(self, mode, target, actual):
+        if (mode==air_conditioning_device.operational_mode_enum.cool):
+            return (actual<=target-self._tswing)
+        elif (mode==air_conditioning_device.operational_mode_enum.heat):
+            return (actual>=target+self._tswing)
+
+    def underdone(self, mode, target, actual):
+        if (mode==air_conditioning_device.operational_mode_enum.cool):
+            return (actual>=target+self._tswing)
+        elif (mode==air_conditioning_device.operational_mode_enum.heat):
+            return (actual<=target-self._tswing)
 
     def refresh(self):
         cmd = request_status_command(self.type)
@@ -257,13 +264,13 @@ class air_conditioning_device(device):
                 return
         newmode=oldmode
         if self.tempcontrol_overriden_fan and oldmode==air_conditioning_device.operational_mode_enum.fan_only:
-            if (overdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
+            if (not self.underdone(self.tempcontrol_usermode, self._target_temperature, self._indoor_temperature)):
                 self.tempcontrol_overriden_fan=True
                 newmode=air_conditioning_device.operational_mode_enum.fan_only
             else:
                 self.tempcontrol_overriden_fan=False
                 newmode=self.tempcontrol_usermode# restore old mode
-        elif overdone(self.operational_mode, self._target_temperature, self._indoor_temperature):
+        elif self.overdone(self.operational_mode, self._target_temperature, self._indoor_temperature):
             self.tempcontrol_overriden_fan=True
             self.tempcontrol_usermode=self._operational_mode
             newmode=air_conditioning_device.operational_mode_enum.fan_only
