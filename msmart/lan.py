@@ -24,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 #aa23ac0000000000000240818e6603ff000000000000000000000000000018000000ce92
 
 class lan:
-    def __init__(self, device_ip, device_id):
+    def __init__(self, device_ip):
         # Get this from any of the Midea based apps, you can find one on Yitsushi's github page
         self.device_ip = device_ip
 

@@ -13,27 +13,10 @@ VERSION = '0.1.19'
 
 _LOGGER = logging.getLogger(__name__)
 
-
-def convert_device_id_hex(device_id: int):
-    hex_string = hex(device_id)[2:]
-    if len(hex_string) % 2 != 0:
-        hex_string = '0' + hex_string
-    old = bytearray.fromhex(hex_string)
-    new = reversed(old)
-    return bytearray(new).hex()
-
-
-def convert_device_id_int(device_id: str):
-    old = bytearray.fromhex(device_id)
-    new = reversed(old)
-    return int(bytearray(new).hex(), 16)
-
-
 class device:
 
     def __init__(self, device_ip: str, device_id: int):
-        device_id = convert_device_id_hex(device_id)
-        self._lan_service = lan(device_ip, device_id)
+        self._lan_service = lan(device_ip)
         self._ip = device_ip
         self._id = device_id
         self._type = 0xac
@@ -45,14 +28,14 @@ class device:
         device = air_conditioning_device(self._ip, self._id)
         return device
 
-    def set_device_detail(self, device_detail: dict):
-        self._id = device_detail['id']
-        self._name = device_detail['name']
-        self._model_number = device_detail['modelNumber']
-        self._serial_number = device_detail['sn']
-        self._type = int(device_detail['type'], 0)
-        self._active = device_detail['activeStatus'] == '1'
-        self._online = device_detail['onlineStatus'] == '1'
+    # def set_device_detail(self, device_detail: dict):
+    #     self._id = device_detail['id']
+    #     self._name = device_detail['name']
+    #     self._model_number = device_detail['modelNumber']
+    #     self._serial_number = device_detail['sn']
+    #     self._type = int(device_detail['type'], 0)
+    #     self._active = device_detail['activeStatus'] == '1'
+    #     self._online = device_detail['onlineStatus'] == '1'
 
     def refresh(self):
         pass
@@ -152,8 +135,8 @@ class air_conditioning_device(device):
             _LOGGER.debug("Unknown Swing Mode: {}".format(value))
             return air_conditioning_device.swing_mode_enum.Off
 
-    def __init__(self, device_ip: str, device_id: str):
-        super().__init__(device_ip, convert_device_id_int(device_id))
+    def __init__(self, device_ip: str, device_id: int):
+        super().__init__(device_ip, (device_id))
         self._prompt_tone = False
         self._power_state = False
         self._target_temperature = 17.0
@@ -261,6 +244,7 @@ class air_conditioning_device(device):
         if (oldmode != air_conditioning_device.operational_mode_enum.fan_only or self._power_state==False):
             self.tempcontrol_overriden_fan=False # if the automation made it fan_only, the user manually changed         if (self._power_state):
             if self._power_state==False:
+                print(f'powered off. oldnewmode:{oldmode}, usermode:{self.tempcontrol_usermode}, \n target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_overridden: {self.tempcontrol_overriden_fan}')
                 return
         newmode=oldmode
         if self.tempcontrol_overriden_fan and oldmode==air_conditioning_device.operational_mode_enum.fan_only:
