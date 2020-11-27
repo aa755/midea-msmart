@@ -5,6 +5,12 @@ from datetime import datetime
 import time
 import sys
 import socket
+import traceback
+
+#how to reliably identiy the usb device: https://unix.stackexchange.com/a/382913/62292
+#pi@rpi-ac:~ $ ls -l /dev/serial/by-path/platform-3f980000.usb-usb-0\:1.*
+#lrwxrwxrwx 1 root root 13 Nov 26 17:01 /dev/serial/by-path/platform-3f980000.usb-usb-0:1.2:1.0-port0 -> ../../ttyUSB0
+#lrwxrwxrwx 1 root root 13 Nov 26 17:01 /dev/serial/by-path/platform-3f980000.usb-usb-0:1.3:1.0-port0 -> ../../ttyUSB1
 
 if __name__ == "__main__":
     client = midea_device(sys.argv[1], 12345)#/dev/ttyUSB0
@@ -59,7 +65,12 @@ if __name__ == "__main__":
                 sys.stdout.flush()
 
             except socket.timeout:
-                lastresp=device.refresh()
+                try:
+                    lastresp=device.refresh()
+                except serial.serialutil.SerialException:
+                    print(traceback.format_exc())
+                    printf("device.refresh() error. could be a serial error")
+                # do the above line in a try and catch
                 print(len(lastresp))#31
                 lastrespa=bytearray(lastresp)
                 lastrespa.extend([199])
