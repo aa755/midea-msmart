@@ -86,7 +86,7 @@ class air_conditioning_device(device):
         Auto = 102
         High = 80
         Medium = 60
-        Low = 40
+        Low = 30
         Silent = 20
 
         @staticmethod
@@ -229,6 +229,7 @@ class air_conditioning_device(device):
         oldmode = air_conditioning_device.operational_mode_enum.get(res.operational_mode)
         self._fan_speed = air_conditioning_device.fan_speed_enum.get(
             res.fan_speed)
+        print(f"fan speed:{res.fan_speed}, {self._fan_speed}")
         self._swing_mode = air_conditioning_device.swing_mode_enum.get(
             res.swing_mode)
         self._eco_mode = res.eco_mode
