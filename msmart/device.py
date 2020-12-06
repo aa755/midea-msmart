@@ -156,6 +156,8 @@ class air_conditioning_device(device):
         self._tswing = 0.5
         self._tswingextra = 1.0
 
+    # not very useful to do external temp control by flipping modes. the has its own good control system that can adjust power to keep constant temperature for a long time, even 30 minutes
+    # typically, on heat mode, this temp is 2'F higher than the setpoint. after just turning the unit on (or perhaps also on increasing temp), the temp does overshoot quite a bit
     def overdone(self, mode, target, actual):
         if (mode==air_conditioning_device.operational_mode_enum.cool):
             return (actual<=target- self._tswing - self._tswingextra)
