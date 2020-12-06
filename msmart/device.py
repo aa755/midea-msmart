@@ -148,19 +148,19 @@ class air_conditioning_device(device):
         self.farenheit_unit = False # default unit is Celcius. this is just to control the temperatue unit of the AC's display. the target_temperature setter always expects a celcius temperature (resolution of 0.5C), as does the midea API
         self.tempcontrol_overriden_fan=False#restarting off hass will be a problem. AC wont change its state. need to manually change mode to heat/cool opposite temporarily after restart
         self.tempcontrol_usermode=air_conditioning_device.operational_mode_enum.auto
-
         self._on_timer = None
         self._off_timer = None
         self._indoor_temperature = 0.0
         self._outdoor_temperature = 0.0
         self._finectrl = True
-        self._tswing = 1.0
+        self._tswing = 0.5
+        self._tswingextra = 1.0
 
     def overdone(self, mode, target, actual):
         if (mode==air_conditioning_device.operational_mode_enum.cool):
-            return (actual<=target-self._tswing)
+            return (actual<=target- self._tswing - self._tswingextra)
         elif (mode==air_conditioning_device.operational_mode_enum.heat):
-            return (actual>=target+self._tswing)
+            return (actual>=target+ self._tswing + self._tswingextra)
 
     def underdone(self, mode, target, actual):
         if (mode==air_conditioning_device.operational_mode_enum.cool):
