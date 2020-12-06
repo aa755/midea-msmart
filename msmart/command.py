@@ -177,6 +177,15 @@ class set_command(base_command):
         else:
             self.data[0x14] &= (~0x04)
 
+    @property
+    def indoor_temp(self):
+        # is the temperature unit fahrenheit? (celcius otherwise)
+        return self.data[0x15]
+
+    @indoor_temp.setter
+    def indoor_temp(self, temp):
+        self.data[0x15]=temp
+
 class appliance_response:
 
     def __init__(self, data: bytearray):

@@ -172,6 +172,7 @@ class air_conditioning_device(device):
 
     def refresh(self):
         cmd = request_status_command(self.type)
+        cmd.indoor_temp = 90
         pkt_builder = packet_builder(self.id)
         pkt_builder.set_command(cmd)
 
@@ -203,6 +204,8 @@ class air_conditioning_device(device):
             pkt_builder = packet_builder(self.id)
 #            cmd.night_light = False
             cmd.fahrenheit = self.farenheit_unit
+            cmd.indoor_temp = 90
+            cmd.night_light = False
             pkt_builder.set_command(cmd)
 
             data = pkt_builder.finalize()
@@ -240,6 +243,7 @@ class air_conditioning_device(device):
         self._outdoor_temperature = res.outdoor_temperature
         self._timer_on = res.on_timer
         self._timer_off = res.off_timer
+        # self.indoor_temp = res.indoor_temperature
         if (not finectrl) or (not self._finectrl):
             self._operational_mode=oldmode
             print(f'oldnewmode:{oldmode}, usermode:{self.tempcontrol_usermode}, \n target:{self._target_temperature}, curtemp: {self._indoor_temperature}, fan_overridden: {self.tempcontrol_overriden_fan}')
