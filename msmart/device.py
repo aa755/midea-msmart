@@ -152,7 +152,7 @@ class air_conditioning_device(device):
         self._off_timer = None
         self._indoor_temperature = 0.0
         self._outdoor_temperature = 0.0
-        self._finectrl = True
+        self._finectrl = False
         self._tswing = 0.5
         self._tswingextra = 1.0
 
